@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upskill Fridays Leaderboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; background: #f8f9fa; }
+    h1 { color: #2b6777; }
+    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+    th { background-color: #e4f0f5; }
+    .log { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Upskill Fridays XP Leaderboard</h1>
+  <table id="leaderboard">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Total XP</th>
+        <th>Level</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="log">
+    <h2>Recent XP Log Commits</h2>
+    <ul id="commit-log"></ul>
+  </div>
+
+  <script>
+    const REPO = 'karikarshivani/upskill-fridays'; // change this
+    const XP_FILE_PATH = 'data/xp_log.json';
+    const GITHUB_API_BASE = 'https://api.github.com/repos/' + REPO;
+
+    async function fetchXPData() {
+      const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${XP_FILE_PATH}`);
+      return await res.json();
+    }
+
+    async function fetchCommits() {
+      const res = await fetch(`${GITHUB_API_BASE}/commits?path=${XP_FILE_PATH}`);
+      return await res.json();
+    }
+
+    function calculateLevel(xp) {
+      return Math.floor(xp / 10); // 10 XP per level
+    }
+
+    function renderLeaderboard(data) {
+      const table = document.querySelector('#leaderboard tbody');
+      table.innerHTML = '';
+      data.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.name}</td>
+          <td>${entry.xp}</td>
+          <td>${calculateLevel(entry.xp)}</td>
+        `;
+        table.appendChild(row);
+      });
+    }
+
+    function renderCommits(commits) {
+      const ul = document.getElementById('commit-log');
+      ul.innerHTML = '';
+      commits.slice(0, 10).forEach(commit => {
+        const li = document.createElement('li');
+        li.textContent = `${commit.commit.author.name}: ${commit.commit.message}`;
+        ul.appendChild(li);
+      });
+    }
+
+    async function init() {
+      const xpData = await fetchXPData();
+      renderLeaderboard(xpData);
+      const commits = await fetchCommits();
+      renderCommits(commits);
+    }
+
+    init();
+  </script>
+</body>
+</html>
