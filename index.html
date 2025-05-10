@@ -15,43 +15,58 @@
     th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
     tr:hover { background-color: #e7f3ff; cursor: pointer; }
     #logs { margin-top: 2rem; }
+    #xpForm, #adminControls { display: none; margin-top: 2rem; }
+    #adminPanelButton, #backButton { float: right; margin: 1rem 0; }
+    #backButton { float: left; }
+    #unlockPrompt { display: none; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Upskill Fridays XP Form</h1>
-  <form id="xpForm">
-    <label for="name">Name:</label>
-    <select id="name" required>
-      <option value="">Select...</option>
-      <option value="Jamie">Jamie</option>
-      <option value="Taylor">Taylor</option>
-      <option value="Alex">Alex</option>
-    </select>
+  <h1>Upskill Fridays Leaderboard</h1>
+  <button id="adminPanelButton">Admin Panel</button>
+  <div id="unlockPrompt">
+    <label for="adminKey">Enter admin key:</label>
+    <input type="text" id="adminKey">
+    <button onclick="unlockAdmin()">Unlock</button>
+  </div>
 
-    <label for="action">Action:</label>
-    <select id="action" required>
-      <option value="Attendance">Attendance</option>
-      <option value="Shared Resource">Shared Resource</option>
-      <option value="Created PoC">Created PoC</option>
-      <option value="Led Session">Led Session</option>
-    </select>
+  <div id="adminControls">
+    <button id="backButton" onclick="showLeaderboard()">Back</button>
+    <h1>XP Admin Panel</h1>
+    <form id="xpForm">
+      <label for="name">Name:</label>
+      <select id="name" required>
+        <option value="">Select...</option>
+        <option value="Jamie">Jamie</option>
+        <option value="Taylor">Taylor</option>
+        <option value="Alex">Alex</option>
+      </select>
 
-    <label for="xp">XP:</label>
-    <select id="xp" required>
-      <option value="">Select...</option>
-      <option value="1">1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="5">5</option>
-    </select>
+      <label for="action">Action:</label>
+      <select id="action" required>
+        <option value="Attendance">Attendance</option>
+        <option value="Shared Resource">Shared Resource</option>
+        <option value="Created PoC">Created PoC</option>
+        <option value="Led Session">Led Session</option>
+      </select>
 
-    <label for="comment">Comment:</label>
-    <input type="text" id="comment" placeholder="Add any details...">
+      <label for="xp">XP:</label>
+      <select id="xp" required>
+        <option value="">Select...</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="5">5</option>
+      </select>
 
-    <label><input type="checkbox" id="persistSelection"> Create another with same selection</label>
+      <label for="comment">Comment:</label>
+      <input type="text" id="comment" placeholder="Add any details...">
 
-    <button type="submit">Submit</button>
-  </form>
+      <label><input type="checkbox" id="persistSelection"> Create another with same selection</label>
+
+      <button type="submit">Submit</button>
+    </form>
+  </div>
 
   <h2>Leaderboard</h2>
   <table id="leaderboard">
@@ -122,6 +137,32 @@
 
       container.appendChild(list);
     }
+
+    function unlockAdmin() {
+      const key = document.getElementById('adminKey').value;
+      if (key === 'sudo') {
+        document.getElementById('adminControls').style.display = 'block';
+        document.getElementById('xpForm').style.display = 'block';
+        document.getElementById('adminPanelButton').style.display = 'none';
+        document.getElementById('unlockPrompt').style.display = 'none';
+        document.getElementById('leaderboard').style.display = 'none';
+        document.getElementById('logs').style.display = 'none';
+      } else {
+        alert('Incorrect key. Access denied.');
+      }
+    }
+
+    function showLeaderboard() {
+      document.getElementById('adminControls').style.display = 'none';
+      document.getElementById('xpForm').style.display = 'none';
+      document.getElementById('adminPanelButton').style.display = 'inline';
+      document.getElementById('leaderboard').style.display = 'table';
+      document.getElementById('logs').style.display = 'block';
+    }
+
+    document.getElementById('adminPanelButton').addEventListener('click', () => {
+      document.getElementById('unlockPrompt').style.display = 'block';
+    });
 
     renderLeaderboard();
   </script>
