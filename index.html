@@ -1,87 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upskill Fridays Leaderboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upskill Fridays XP Tracker</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; background: #f8f9fa; }
-    h1 { color: #2b6777; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
-    th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-    th { background-color: #e4f0f5; }
-    .log { margin-top: 2rem; }
+    body { font-family: Arial, sans-serif; margin: 2rem; background-color: #f9f9f9; }
+    h1, h2 { color: #333; }
+    form { margin-bottom: 2rem; }
+    label { display: block; margin-top: 1rem; }
+    select, input[type="text"] { width: 100%; padding: 0.5rem; margin-top: 0.5rem; }
+    button { margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+    th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: left; }
+    tr:hover { background-color: #e7f3ff; cursor: pointer; }
+    #logs { margin-top: 2rem; }
   </style>
 </head>
 <body>
-  <h1>Upskill Fridays XP Leaderboard</h1>
+  <h1>Upskill Fridays XP Form</h1>
+  <form id="xpForm">
+    <label for="name">Name:</label>
+    <select id="name" required>
+      <option value="">Select...</option>
+      <option value="Jamie">Jamie</option>
+      <option value="Taylor">Taylor</option>
+      <option value="Alex">Alex</option>
+    </select>
+
+    <label for="action">Action:</label>
+    <select id="action" required>
+      <option value="Attendance">Attendance</option>
+      <option value="Shared Resource">Shared Resource</option>
+      <option value="Created PoC">Created PoC</option>
+      <option value="Led Session">Led Session</option>
+    </select>
+
+    <label for="xp">XP:</label>
+    <select id="xp" required>
+      <option value="">Select...</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+      <option value="5">5</option>
+    </select>
+
+    <label for="comment">Comment:</label>
+    <input type="text" id="comment" placeholder="Add any details...">
+
+    <label><input type="checkbox" id="persistSelection"> Create another with same selection</label>
+
+    <button type="submit">Submit</button>
+  </form>
+
+  <h2>Leaderboard</h2>
   <table id="leaderboard">
     <thead>
-      <tr>
-        <th>Name</th>
-        <th>Total XP</th>
-        <th>Level</th>
-      </tr>
+      <tr><th>Name</th><th>Total XP</th></tr>
     </thead>
     <tbody></tbody>
   </table>
 
-  <div class="log">
-    <h2>Recent XP Log Commits</h2>
-    <ul id="commit-log"></ul>
-  </div>
+  <div id="logs"></div>
 
   <script>
-    const REPO = 'karikarshivani/upskill-fridays'; // change this
-    const XP_FILE_PATH = 'data/xp_log.json';
-    const GITHUB_API_BASE = 'https://api.github.com/repos/' + REPO;
+    const form = document.getElementById('xpForm');
+    const logs = JSON.parse(localStorage.getItem('xpLogs') || '[]');
 
-    async function fetchXPData() {
-      const res = await fetch(`https://raw.githubusercontent.com/${REPO}/main/${XP_FILE_PATH}`);
-      return await res.json();
-    }
+    form.addEventListener('submit', e => {
+      e.preventDefault();
 
-    async function fetchCommits() {
-      const res = await fetch(`${GITHUB_API_BASE}/commits?path=${XP_FILE_PATH}`);
-      return await res.json();
-    }
+      const name = document.getElementById('name').value;
+      const action = document.getElementById('action').value;
+      const xp = parseInt(document.getElementById('xp').value);
+      const comment = document.getElementById('comment').value;
+      const date = new Date().toISOString().split('T')[0];
 
-    function calculateLevel(xp) {
-      return Math.floor(xp / 10); // 10 XP per level
-    }
+      logs.push({ name, action, xp, comment, date });
+      localStorage.setItem('xpLogs', JSON.stringify(logs));
 
-    function renderLeaderboard(data) {
+      if (!document.getElementById('persistSelection').checked) {
+        form.reset();
+      } else {
+        document.getElementById('comment').value = '';
+      }
+
+      renderLeaderboard();
+    });
+
+    function renderLeaderboard() {
       const table = document.querySelector('#leaderboard tbody');
       table.innerHTML = '';
-      data.forEach(entry => {
+      const grouped = {};
+
+      logs.forEach(entry => {
+        if (!grouped[entry.name]) grouped[entry.name] = 0;
+        grouped[entry.name] += entry.xp;
+      });
+
+      const sorted = Object.entries(grouped).sort((a, b) => b[1] - a[1]);
+
+      sorted.forEach(([name, totalXP]) => {
         const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${entry.name}</td>
-          <td>${entry.xp}</td>
-          <td>${calculateLevel(entry.xp)}</td>
-        `;
+        row.innerHTML = `<td>${name}</td><td>${totalXP}</td>`;
+        row.addEventListener('click', () => showLogs(name));
         table.appendChild(row);
       });
     }
 
-    function renderCommits(commits) {
-      const ul = document.getElementById('commit-log');
-      ul.innerHTML = '';
-      commits.slice(0, 10).forEach(commit => {
-        const li = document.createElement('li');
-        li.textContent = `${commit.commit.author.name}: ${commit.commit.message}`;
-        ul.appendChild(li);
+    function showLogs(name) {
+      const container = document.getElementById('logs');
+      const userLogs = logs.filter(entry => entry.name === name);
+      container.innerHTML = `<h2>${name}'s XP Log</h2>`;
+
+      const list = document.createElement('ul');
+      userLogs.forEach(entry => {
+        const item = document.createElement('li');
+        item.textContent = `${entry.date} – ${entry.xp} XP for ${entry.action}${entry.comment ? ': ' + entry.comment : ''}`;
+        list.appendChild(item);
       });
+
+      container.appendChild(list);
     }
 
-    async function init() {
-      const xpData = await fetchXPData();
-      renderLeaderboard(xpData);
-      const commits = await fetchCommits();
-      renderCommits(commits);
-    }
-
-    init();
+    renderLeaderboard();
   </script>
 </body>
 </html>
